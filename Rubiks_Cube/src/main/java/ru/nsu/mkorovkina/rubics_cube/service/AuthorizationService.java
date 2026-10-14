@@ -1,8 +1,10 @@
 package ru.nsu.mkorovkina.rubics_cube.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.mkorovkina.rubics_cube.dto.AuthResponse;
 import ru.nsu.mkorovkina.rubics_cube.model.RefreshTokenModel;
 import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
@@ -34,9 +36,9 @@ public class AuthorizationService {
     @Transactional
     public AuthResponse login(String username, String password) {
         UserModel user = userService.findByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("Неверный логин"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный логин"));
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Неверный пароль");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный пароль");
         }
         return authResponse(user);
     }
@@ -44,10 +46,10 @@ public class AuthorizationService {
     @Transactional
     public AuthResponse updateAccessToken(String token) {
         RefreshTokenModel refreshToken = refreshTokenService.findByToken(token)
-                .orElseThrow(() -> new IllegalArgumentException("Неверный токен"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный токен"));
         if (refreshTokenService.isExpired(refreshToken)) {
             refreshTokenService.deleteByToken(token);
-            throw new IllegalArgumentException("Срок действия токена истёк");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Срок действия токена истёк");
         }
         UserModel user = refreshToken.getUser();
         AuthResponse authResponse = new AuthResponse();

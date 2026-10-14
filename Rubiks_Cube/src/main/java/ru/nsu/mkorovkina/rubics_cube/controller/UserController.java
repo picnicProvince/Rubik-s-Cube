@@ -4,9 +4,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
 import ru.nsu.mkorovkina.rubics_cube.service.UserService;
-
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -31,21 +29,15 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> create(@RequestBody UserModel user) {
-        try {
-            UserModel saved = userService.save(user);
-            return ResponseEntity.ok(saved);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-        }
+        UserModel saved = userService.save(user);
+        return ResponseEntity.ok(saved);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        try {
-            userService.delete(id);
+        if (userService.deleteById(id)) {
             return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
         }
+        return ResponseEntity.notFound().build();
     }
 }

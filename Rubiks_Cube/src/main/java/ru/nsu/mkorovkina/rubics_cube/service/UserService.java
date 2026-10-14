@@ -1,8 +1,10 @@
 package ru.nsu.mkorovkina.rubics_cube.service;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
 import ru.nsu.mkorovkina.rubics_cube.repository.UserRepository;
 
@@ -34,10 +36,10 @@ public class UserService {
     @Transactional
     public UserModel save(UserModel user) {
         if (userRepository.existsByUsername(user.getUsername())) {
-            throw new IllegalArgumentException("Это имя уже занято");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Это имя уже занято");
         }
         if (userRepository.existsByEmail(user.getEmail())) {
-            throw new IllegalArgumentException("Этот email уже занят");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Этот email уже занят");
         }
         if (user.getRole() == null) {
             user.setRole("USER");
@@ -47,11 +49,11 @@ public class UserService {
     }
 
     @Transactional
-    public void delete(Long id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
-        } else {
-            throw new IllegalArgumentException("Пользователь не найден");
+    public boolean deleteById(Long id) {
+        if (!userRepository.existsById(id)) {
+            return false;
         }
+        userRepository.deleteById(id);
+        return true;
     }
 }
