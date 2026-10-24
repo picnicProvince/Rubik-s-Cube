@@ -34,7 +34,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) { //не могу удалить пользователя, скорее всего из-за того, что с ним связана ещё одна таблица
         if (userService.deleteById(id)) {
             return ResponseEntity.noContent().build();
         }
