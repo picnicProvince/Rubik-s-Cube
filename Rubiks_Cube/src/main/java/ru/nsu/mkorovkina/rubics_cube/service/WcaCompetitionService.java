@@ -21,28 +21,33 @@ public class WcaCompetitionService {
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
     private final CompetitionRepository competitionRepository;
+    private final RussianCompetitionService russianCompetitionService;
     private static final String BASE_URL =
             "https://raw.githubusercontent.com/robiningelbrecht/wca-rest-api/v1/competitions-page-%d.json";
 
     public WcaCompetitionService(RestTemplate restTemplate, ObjectMapper objectMapper,
-                                 CompetitionRepository competitionRepository) {
+                                 CompetitionRepository competitionRepository,
+                                 RussianCompetitionService russianCompetitionService) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.competitionRepository = competitionRepository;
+        this.russianCompetitionService = russianCompetitionService;
     }
 
     @Transactional
     public void syncUpcoming() {
-        List<Competition> fetched = fetchCompetition();
-        if (fetched.isEmpty()) {
+        List<Competition> allCompetitions = new ArrayList<>();
+        allCompetitions.addAll(fetchCompetition());
+        allCompetitions.addAll(russianCompetitionService.getRussianCompetitions());
+        if (allCompetitions.isEmpty()) {
             return;
         }
-        Set<String> syncedIds = fetched.stream().map(Competition::getId).collect(Collectors.toSet());
+        Set<String> syncedIds = allCompetitions.stream().map(Competition::getId).collect(Collectors.toSet());
         Map<String, Competition> existing = competitionRepository.findAllById(syncedIds)
                 .stream()
                 .collect(Collectors.toMap(Competition::getId, c -> c));
-        List<Competition> toSave = new ArrayList<>(fetched.size());
-        for (Competition fresh : fetched) {
+        List<Competition> toSave = new ArrayList<>(allCompetitions.size());
+        for (Competition fresh : allCompetitions) {
             Competition target = existing.get(fresh.getId());
             if (target != null) {
                 target.setName(fresh.getName());
@@ -50,7 +55,6 @@ public class WcaCompetitionService {
                 target.setCountry(fresh.getCountry());
                 target.setFrom(fresh.getFrom());
                 target.setTill(fresh.getTill());
-                target.setEvents(fresh.getEvents());
                 toSave.add(target);
             } else {
                 toSave.add(fresh);
@@ -72,6 +76,9 @@ public class WcaCompetitionService {
             }
             for (WcaCompetition wcaCompetition : page.getItems()) {
                 if (wcaCompetition.isCanceled()) {
+                    continue;
+                }
+                if (!wcaCompetition.getEvents().contains("333")) {
                     continue;
                 }
                 LocalDate start = LocalDate.parse(wcaCompetition.getDate().getFrom());
@@ -104,7 +111,6 @@ public class WcaCompetitionService {
         c.setCountry(wcaCompetition.getCountry());
         c.setFrom(LocalDate.parse(wcaCompetition.getDate().getFrom()));
         c.setTill(LocalDate.parse(wcaCompetition.getDate().getTill()));
-        c.setEvents(String.join(",", wcaCompetition.getEvents()));
         return c;
     }
 }

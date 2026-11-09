@@ -2,7 +2,6 @@ package ru.nsu.mkorovkina.rubics_cube.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import ru.nsu.mkorovkina.rubics_cube.model.RefreshTokenModel;
-import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
 
 import java.util.Optional;
 
