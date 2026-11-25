@@ -1,8 +1,9 @@
 package ru.nsu.mkorovkina.rubics_cube.controller;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
+import ru.nsu.mkorovkina.rubics_cube.dto.UserResponse;
 import ru.nsu.mkorovkina.rubics_cube.service.UserService;
 import java.util.List;
 
@@ -16,28 +17,26 @@ public class UserController {
     }
 
     @GetMapping
-    public List<UserModel> getAll() {
-        return userService.findAll();
+    public ResponseEntity<List<UserResponse>> getAll() {
+        List<UserResponse> users = userService.findAll();
+        return ResponseEntity.ok(users);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserModel> getById(@PathVariable Long id) {
-        return userService.findById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<UserResponse> getById(@PathVariable Long id) {
+        UserResponse user = userService.getById(id);
+        return ResponseEntity.ok(user);
     }
 
-    @PostMapping
-    public ResponseEntity<?> create(@RequestBody UserModel user) {
-        UserModel saved = userService.save(user);
-        return ResponseEntity.ok(saved);
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getMe(Authentication authentication) {
+        UserResponse user = userService.getMe(authentication.getName());
+        return ResponseEntity.ok(user);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) { //не могу удалить пользователя, скорее всего из-за того, что с ним связана ещё одна таблица
-        if (userService.deleteById(id)) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        userService.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

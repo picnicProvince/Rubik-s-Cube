@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.mkorovkina.rubics_cube.dto.AuthResponse;
+import ru.nsu.mkorovkina.rubics_cube.dto.UserRequest;
 import ru.nsu.mkorovkina.rubics_cube.model.RefreshTokenModel;
 import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
 import ru.nsu.mkorovkina.rubics_cube.security.JwtService;
@@ -28,15 +29,14 @@ public class AuthorizationService {
     }
 
     @Transactional
-    public AuthResponse registration(UserModel user) {
-        UserModel savedUser = userService.save(user);
+    public AuthResponse registration(UserRequest userRequest) {
+        UserModel savedUser = userService.save(userRequest);
         return authResponse(savedUser);
     }
 
     @Transactional
     public AuthResponse login(String username, String password) {
-        UserModel user = userService.findByUsername(username)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный логин"));
+        UserModel user = userService.findByUsername(username);
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Неверный пароль");
         }

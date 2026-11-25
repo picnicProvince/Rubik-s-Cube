@@ -1,5 +1,7 @@
 package ru.nsu.mkorovkina.rubics_cube.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,46 +27,35 @@ public class SolveService {
 
     @Transactional
     public SolveResponse createSolve(String username, SolveRequest solveRequest) {
-        Optional<UserModel> user = userService.findByUsername(username);
-        UserModel userModel;
-        if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден");
-        } else {
-            userModel = user.get();
-        }
+        UserModel user = userService.findByUsername(username);
         SolveModel solve = new SolveModel();
         solve.setScramble(solveRequest.getScramble());
         solve.setMoves(solveRequest.getMoves());
         solve.setBuildDate(solveRequest.getBuildDate());
         solve.setTimeMs(solveRequest.getTimeMs());
-        solve.setUser(userModel);
+        solve.setUser(user);
         SolveModel saved = solveRepository.save(solve);
         return toResponse(saved);
     }
 
     public List<SolveResponse> getUserSolves(String username) {
-        Optional<UserModel> user = userService.findByUsername(username);
-        UserModel userModel;
-        if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден");
-        } else {
-            userModel = user.get();
-        }
-        return solveRepository.findTop100ByUserOrderByBuildDateDesc(userModel)
+        UserModel user = userService.findByUsername(username);
+        return solveRepository.findTop100ByUserOrderByBuildDateDesc(user)
                 .stream()
                 .map(this::toResponse)
                 .toList();
     }
 
+    public Page<SolveResponse> getAllUserSolves(String username, Pageable pageable) {
+        UserModel user = userService.findByUsername(username);
+        return solveRepository
+                .findByUserOrderByBuildDateDesc(user, pageable)
+                .map(this::toResponse);
+    }
+
     public SolveResponse getSolveById(String username, Long id) {
-        Optional<UserModel> user = userService.findByUsername(username);
-        UserModel userModel;
-        if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден");
-        } else {
-            userModel = user.get();
-        }
-        Optional<SolveModel> solve = solveRepository.findByIdAndUser(id, userModel);
+        UserModel user = userService.findByUsername(username);
+        Optional<SolveModel> solve = solveRepository.findByIdAndUser(id, user);
         SolveModel solveModel;
         if (solve.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Сборка не найдена");
@@ -76,14 +67,8 @@ public class SolveService {
 
     @Transactional
     public void deleteSolveById(String username, Long id) {
-        Optional<UserModel> user = userService.findByUsername(username);
-        UserModel userModel;
-        if (user.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Пользователь не найден");
-        } else {
-            userModel = user.get();
-        }
-        Optional<SolveModel> solve = solveRepository.findByIdAndUser(id, userModel);
+        UserModel user = userService.findByUsername(username);
+        Optional<SolveModel> solve = solveRepository.findByIdAndUser(id, user);
         SolveModel solveModel;
         if (solve.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Сборка не найдена");

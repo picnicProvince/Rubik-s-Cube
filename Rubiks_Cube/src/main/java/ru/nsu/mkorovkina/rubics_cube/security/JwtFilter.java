@@ -1,21 +1,25 @@
 package ru.nsu.mkorovkina.rubics_cube.security;
 
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.server.ResponseStatusException;
 import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
 import ru.nsu.mkorovkina.rubics_cube.service.UserService;
 
 import java.io.IOException;
 import java.util.List;
 
+@Slf4j
 public class JwtFilter extends OncePerRequestFilter {
     private static final String AUTHENTICATION_TYPE = "Bearer ";
     private final JwtService jwtService;
@@ -42,8 +46,8 @@ public class JwtFilter extends OncePerRequestFilter {
         try {
             username = jwtService.extractUsername(jwt);
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserModel user = userService.findByUsername(username).orElse(null);
-                if (user != null && jwtService.isTokenValid(jwt, user)) {
+                UserModel user = userService.findByUsername(username);
+                if (jwtService.isTokenValid(jwt, user)) {
                     List<SimpleGrantedAuthority> authorities = List.of(
                             new SimpleGrantedAuthority("ROLE_" + user.getRole())
                     );
@@ -57,7 +61,10 @@ public class JwtFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 }
             }
-        } catch (Exception e) {
+        } catch (JwtException e) {
+            log.debug("Недействительный JWT: {}", e.getMessage());
+        } catch (ResponseStatusException e) {
+            log.debug("Пользователь не найден при проверке JWT");
         }
         filterChain.doFilter(request, response);
     }

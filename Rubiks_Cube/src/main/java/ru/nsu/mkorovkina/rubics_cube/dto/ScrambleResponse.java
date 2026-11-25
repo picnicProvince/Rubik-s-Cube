@@ -1,3 +1,8 @@
 package ru.nsu.mkorovkina.rubics_cube.dto;
 
-public record ScrambleResponse(String scramble) {}
+import lombok.Data;
+
+@Data
+public class ScrambleResponse {
+    private String scramble;
+}

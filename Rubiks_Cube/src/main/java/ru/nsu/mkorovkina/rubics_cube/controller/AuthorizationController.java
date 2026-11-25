@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import ru.nsu.mkorovkina.rubics_cube.dto.AuthResponse;
 import ru.nsu.mkorovkina.rubics_cube.dto.LoginRequest;
 import ru.nsu.mkorovkina.rubics_cube.dto.UpdateRequest;
-import ru.nsu.mkorovkina.rubics_cube.model.UserModel;
+import ru.nsu.mkorovkina.rubics_cube.dto.UserRequest;
 import ru.nsu.mkorovkina.rubics_cube.service.AuthorizationService;
 
 @RestController
@@ -21,7 +21,7 @@ public class AuthorizationController {
     }
 
     @PostMapping("/registration")
-    public ResponseEntity<AuthResponse>  registration(@RequestBody UserModel user) {
+    public ResponseEntity<AuthResponse>  registration(@RequestBody UserRequest user) {
         AuthResponse response = authorizationService.registration(user);
         return ResponseEntity.ok(response);
     }
